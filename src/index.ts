@@ -5,12 +5,12 @@ import { calculateSpotPrice } from './logic/pricing';
 
 const app = express();
 
-// Enable CORS for frontend communication
+// Middleware: Enable CORS for frontend port 3000 and parse JSON
 app.use(cors({ origin: 'http://localhost:3000' })); 
 app.use(express.json());
 
 /**
- * Fetch real-time IPO metrics and spot price.
+ * Fetch IPO metrics and real-time pricing for the Dashboard.
  */
 app.get('/api/status', (req: Request, res: Response) => {
     const spotPrice = calculateSpotPrice(db.totalPiInvested);
@@ -20,12 +20,12 @@ app.get('/api/status', (req: Request, res: Response) => {
         totalPiInvested: db.totalPiInvested || 0,
         userPiBalance: db.userPiBalance || 0,
         history: db.history || [],
-        spotPrice: spotPrice || 0
+        spotPrice: spotPrice || 0.35
     });
 });
 
 /**
- * Process U2A investment and update on-chain state.
+ * Handle U2A investment and update on-chain metrics.
  */
 app.post('/api/invest', (req: Request, res: Response) => {
     const { amount } = req.body;
