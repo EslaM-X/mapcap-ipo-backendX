@@ -1,37 +1,39 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { db } from './data/db'; 
 import { calculateSpotPrice } from './logic/pricing';
 
 const app = express();
-app.use(cors()); 
+
+// Enable CORS for frontend communication
+app.use(cors({ origin: 'http://localhost:3000' })); 
 app.use(express.json());
 
 /**
- * Syncs Dashboard with current IPO metrics and real-time spot price.
+ * Fetch real-time IPO metrics and spot price.
  */
-app.get('/api/ipo/status', (req, res) => {
+app.get('/api/status', (req: Request, res: Response) => {
     const spotPrice = calculateSpotPrice(db.totalPiInvested);
     
     res.json({
-        ...db,
-        spotPrice
+        totalInvestors: db.totalInvestors || 0,
+        totalPiInvested: db.totalPiInvested || 0,
+        userPiBalance: db.userPiBalance || 0,
+        history: db.history || [],
+        spotPrice: spotPrice || 0
     });
 });
 
 /**
- * Handles U2A investment flow. 
- * Simulates on-chain confirmation before updating local state.
+ * Process U2A investment and update on-chain state.
  */
-app.post('/api/ipo/invest', (req, res) => {
+app.post('/api/invest', (req: Request, res: Response) => {
     const { amount } = req.body;
     
     if (amount && amount > 0) {
-        // Update pool metrics
         db.totalPiInvested += amount;
         db.userPiBalance += amount;
         
-        // Push new price point to historical data for chart rendering
         const newPrice = calculateSpotPrice(db.totalPiInvested);
         db.history.push({ 
             day: db.history.length + 1, 
