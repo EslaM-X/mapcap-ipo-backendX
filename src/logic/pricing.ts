@@ -7,6 +7,8 @@ export const calculateSpotPrice = (totalPi: number): number => {
     if (totalPi <= 0) return 0;
     
     // Formula: Supply / Investment Balance
-    return TOTAL_MAPCAP / totalPi;
-};
+    const price = TOTAL_MAPCAP / totalPi;
 
+    // Return price rounded to 4 decimal places for clean UI display
+    return Number(price.toFixed(4));
+};
