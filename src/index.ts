@@ -5,17 +5,22 @@ import { calculateSpotPrice } from './logic/pricing';
 
 const app = express();
 
-// Enable CORS for local development and parse JSON payloads
-app.use(cors({ origin: 'http://localhost:3000' })); 
+// Middleware: Enable cross-origin resource sharing and JSON parsing
+app.use(cors()); 
 app.use(express.json());
 
+// Logger: Track API interactions in the Termux terminal
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    next();
+});
+
 /**
- * Endpoint: GET /api/status
- * Provides real-time IPO metrics and historical price points for the dashboard.
+ * GET /api/status
+ * Synchronizes dashboard with current supply and price history.
  */
 app.get('/api/status', (req: Request, res: Response) => {
     const spotPrice = calculateSpotPrice(db.totalPiInvested);
-    
     res.json({
         totalInvestors: db.totalInvestors,
         totalPiInvested: db.totalPiInvested,
@@ -26,20 +31,19 @@ app.get('/api/status', (req: Request, res: Response) => {
 });
 
 /**
- * Endpoint: POST /api/invest
- * Processes U2A investment, updates supply metrics, and appends a new price point.
+ * POST /api/invest
+ * Handles U2A investment flow and updates on-chain price trajectory.
  */
 app.post('/api/invest', (req: Request, res: Response) => {
     const { amount } = req.body;
-    
+    console.log(`Processing U2A Investment: ${amount} Pi`);
+
     if (amount && amount > 0) {
         db.totalPiInvested += amount;
         db.userPiBalance += amount;
         
-        // Recalculate price based on new investment total
+        // Push a new price point to reflect supply changes in the chart
         const newPrice = calculateSpotPrice(db.totalPiInvested);
-        
-        // Push a new coordinate for the SVG Line Chart
         db.history.push({ 
             day: db.history.length + 1, 
             price: newPrice 
@@ -47,26 +51,25 @@ app.post('/api/invest', (req: Request, res: Response) => {
         
         return res.status(200).json({ success: true, newBalance: db.userPiBalance });
     }
-    
     res.status(400).json({ error: "Invalid transaction amount" });
 });
 
 /**
- * Endpoint: POST /api/withdraw
- * Handles A2U requests and adjusts capital metrics.
+ * POST /api/withdraw
+ * Executes A2U withdrawal and adjusts internal liquidity metrics.
  */
 app.post('/api/withdraw', (req: Request, res: Response) => {
     const { amount } = req.body;
-
     if (amount && amount > 0 && amount <= db.userPiBalance) {
         db.userPiBalance -= amount;
         db.totalPiInvested -= amount; 
-        
         return res.status(200).json({ success: true, newBalance: db.userPiBalance });
     }
-    
-    res.status(400).json({ error: "Insufficient funds or invalid amount" });
+    res.status(400).json({ error: "Insufficient balance for withdrawal" });
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`MapCap Backend: Listening on port ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`🚀 MapCap Core listening on port ${PORT}`);
+    console.log(`📊 Active history points: ${db.history.length}`);
+});
