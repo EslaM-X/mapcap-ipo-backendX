@@ -46,5 +46,21 @@ app.post('/api/invest', (req: Request, res: Response) => {
     res.status(400).json({ error: "Invalid transaction amount" });
 });
 
+/**
+ * Handle A2U withdrawal and update user balance.
+ */
+app.post('/api/withdraw', (req: Request, res: Response) => {
+    const { amount } = req.body;
+
+    if (amount && amount > 0 && amount <= db.userPiBalance) {
+        db.userPiBalance -= amount;
+        db.totalPiInvested -= amount; // Reflecting capital movement
+        
+        return res.status(200).json({ success: true, newBalance: db.userPiBalance });
+    }
+    
+    res.status(400).json({ error: "Invalid amount or insufficient balance" });
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`MapCap Service active on port ${PORT}`));
