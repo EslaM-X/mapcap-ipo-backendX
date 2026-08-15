@@ -1,5 +1,7 @@
 # MapCap IPO · Backend
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![CI](https://github.com/EslaM-X/mapcap-ipo-backendX/actions/workflows/ci.yml/badge.svg)](https://github.com/EslaM-X/mapcap-ipo-backendX/actions)
+
 TypeScript API services behind the MapCap IPO system: token pricing,
 investment bookkeeping, and the endpoints the frontend calls.
 
